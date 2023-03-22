@@ -1,0 +1,70 @@
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>config_data_type</th>
+      <th>config_data_logging</th>
+      <th>config_data_connection</th>
+      <th>config_data_secure</th>
+      <th>config_data_runtime</th>
+      <th>config_data_advanced</th>
+      <th>config_data_context_path</th>
+      <th>config_data_url_pattern</th>
+      <th>config_data_include_custom_directories</th>
+      <th>config_data_ddl_defaults</th>
+      <th>config_data_transaction</th>
+      <th>config_data_organisation_endpoint</th>
+      <th>config_data_employee_endpoint</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>webserver</th>
+      <td>builtin</td>
+      <td>{'level': 'INFO', 'log_dir': 'auto', 'ems': {'level': 'SEVERE', 'collector': '$0'}}</td>
+      <td>{'type': ['https'], 'http_port': 8080, 'transport_provider': '$ZTC0', 'address': 'auto'}</td>
+      <td>{'https_port': 8443}</td>
+      <td>{'pathmon_name': 'auto', 'pathway_subvolume': 'auto', 'pathctl': 'auto', 'min_instances': 2, 'max_instances': 4, 'max_connections': 250, 'java': {'Xmx': '1024m', 'Xms': '1024m'}, 'elasticity': {'enable': False, 'collection_interval': 30, 'expand_threshold': 70, 'contract_threshold': 30}}</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+    </tr>
+    <tr>
+      <th>endpoint_global_configuration</th>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>{'csrf': 'disable'}</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>ROOT</td>
+      <td>/rest/*</td>
+      <td>None</td>
+      <td>{'java_package_name': 'com.hpe.nonstop.commons', 'ddl_path': '/G/system/zapidict'}</td>
+      <td>{'mode': 'NEVER', 'timeout': 300, 'two_phase_commit': False}</td>
+      <td>NaN</td>
+      <td>NaN</td>
+    </tr>
+    <tr>
+      <th>endpoint_definition</th>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>{'path': '/del', 'description': 'This Context contains route for the verbs delete', 'delete': {'authorization': {'policy': 'admin'}, 'url': '/deleting/', 'description': 'This Route will delete employee data from the DB based on the ID present in the request', 'to': {'url': 'nsji:localhost:9999', 'payload': {'type': 'ddl', 'ddl_definition': {'input': 'request', 'output': 'response', 'error': 'response'}}, 'error_handler': {'handler': 'DDL_ERROR_FIELD_HANDLER', 'attributes': {'value': '1', 'comparator': 'eq', 'error_field': 'response.emp.emp_Id'}}, 'service': {'processName': 'GWAY'}, 'json': {'validate': False}}}, 'put': {'authorization': {'policy': 'admin'}, 'url': '/put/', 'to': {'url': 'nsji:localhost:9999', 'payload': {'type': 'ddl', 'ddl_definition': {'input': 'request', 'output': 'response', 'error': 'response'}}, 'service': {'processName': 'GWAY'}, 'json': {'validate': False}}}}</td>
+      <td>{'path': '/emp', 'get': {'authorization': {'policy': 'user'}, 'url': '/{version}/{user-id}', 'versioning': {'request_header': 'emp.version', 'to_dynamic': {'v1': {'url': 'nsji:localhost:9999', 'payload': {'type': 'ddl', 'ddl_definition': {'input': 'request', 'output': 'response', 'error': 'response'}}, 'service': {'processName': 'GWAY'}, 'json': {'validate': False, 'input_transformer': '/spec.json'}}, 'default': {'url': 'nsji:localhost:9999', 'payload': {'type': 'ddl', 'ddl_definition': {'input': 'request', 'output': 'response', 'error': 'response'}}, 'service': {'processName': 'GWAY'}, 'json': {'validate': False, 'input_transformer': '/spec.json'}}}}}, 'post': {'authorization': None, 'url': '/posting/', 'to': {'url': 'nsji:localhost:9999', 'payload': {'type': 'ddl', 'ddl_definition': {'input': 'request', 'output': 'response', 'error': 'response'}}, 'service': {'processName': 'GWAY'}, 'json': {'validate': False}}}}</td>
+    </tr>
+  </tbody>
+</table>

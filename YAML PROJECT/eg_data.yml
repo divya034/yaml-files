@@ -1,0 +1,787 @@
+#absolute path of the NSJ installation
+nsjava_home: /usr/tandem/nssjava/jdk110_l11
+#absolute path of the NSJ Infrastructure (NSJI) installation.
+nsji_home: /usr/tandem/nssji
+#absolute path of the NSMEF installation
+nsmef_home : /usr/tandem/nsmef
+#indicates the deployment type gateway, since this config YML file is for gateway, the value is not to be modified. 
+deployment_type: gateway 
+#unique_identifier : The prefix for the named process. 
+#It is a string of two characters, The script internally appends a running counter to the unique_identifier to derive the process name.
+#counter will be incremented for each update action.
+#For Example: GW will be appended with '10' during create action, so the process name would be derived as GW10,GW11 and so on..
+#             When update action is performed on this deployment,the process name would be derived as GW20,GW21 and so on..
+#If the deployment is updated more than 9 times, then the unique_identifier string is trimmed to 1 character.
+#For Example: G100 ,G101 and so on..
+#Example: GW
+#Default: GW          
+unique_identifier : GW
+
+config_data:
+   webserver:
+      #type: indicates the webserver that must be used to provide REST services. For the current API Gateway 1.0 release, only the default value builtin is supported
+      type: builtin
+      #logging : configures the location and severity of logging for the webserver
+      logging:
+        - level specifies the level of logging. 
+        - supported logging levels are SEVERE, WARNING, INFO, CONFIG, FINE, FINER, FINEST or ALL
+        - Example is FINE
+        - default is INFO
+        level: INFO
+        #log_dir: Absolute path for the log directory. gway<currentdate>.log will be created in this location. For the current API Gateway 1.0 release, only auto is supported and directory cannot be specified.
+        #Default: auto, auto configures the log file to <deployment_home>/runtime/logs. 
+        log_dir: auto
+        #ems : configures the EMS logging in NonStop
+        ems:
+           #level: level specifies the level of ems logging, it is recommended to use SEVERE and FATAL
+           #supported logging levels are FINEST, FINER, FINE, CONFIG, INFO, WARNING, SEVERE, FATAL
+           #Hewlett Packard Enterprise recommends SEVERE and FATAL
+           #Example: FATAL
+           #default: SEVERE        
+           level: SEVERE
+           #collector: the EMS collector to log the messages
+           #Example: $ZLOG
+           #default: $0
+           collector: $0     
+      #connection : configures the TCP/HTTP(S) connection parameters
+      connection:
+         #type: type specifies the connector type of hyper text transfer protocol. The keystore must be configured with custom certificates.
+         #supported values are [http], [https], [http,https]
+         #Example: [http]
+         #default: [https]
+         type: [https]
+         #http_port: The http port to be used by [http] connector. This field is mandatory
+         #Example: 8080
+         #Default: There is no default. A valid integer ranges between 10 and 64000 can be specified for port.      
+         http_port: 8080   
+         #transport_provider: The TCP service provider on the NonStop platform.
+         #Example: $ZTC5
+         #Default: $ZTC0
+         transport_provider : $ZTC0
+         #address: The ip address on which the webserver will bind.
+         #Example: 15.213.45.67
+         #Default: auto, The value is derived from the transport provider. If multiple ip associated
+         #to the provider, then it'll pick the first one.
+         address: auto
+      #secure : the parameters for securing the gateway connection
+      secure:
+         #https_port: The https port to be used by [https] connector. This field is mandatory.
+         #Example: 443
+         #Default: There is no default. A valid integer ranges between 10 and 64000 can be specified for port.
+         https_port: 8443
+      #runtime : configures the TS/MP runtime parameters
+      runtime:
+         #pathmon_name: The name of the pathmon on which the deployment will be brought up. Name can be specified using 5 alphanumeric characters.
+         #Example: $ptmon
+         #Default: "auto" If the value is not specified the name of the pathmon is derived from the http_port
+         #as "G<hex value of http port>". If the http port is 80 then the pathmon name will be G50.
+         #If the http port is 8089 the pathmon name will be GF99
+         pathmon_name: auto
+         #pathway_subvolume: subvolume for the pathmon of the deployment. The pathmon related files like pathctl are stored in this location.
+         #Example: $Data01.subvol
+         #Default: "auto", users default volume and subvolume will be used      
+         pathway_subvolume: auto
+         #pathctl: The name of the pathctl file of the deployment
+         #Example: pathctl
+         #Default: "auto" if the value is auto the pathctl file name will be set to pathmon_name       
+         pathctl: auto      
+         #min_instances: The minimum number of runtime servers to be started. This value is used to configure NUMSTATIC for the gateway server serverclass.
+         #Example: 5
+         #Default: 2 
+         min_instances: 2
+         #max_instances: The maximum number of runtime servers to be started.
+         #Example: 10
+         #Default: 4 
+         max_instances: 4
+         #max_connections: Maximum number of connections a runtime webserver instance can handle without an impact on the performance.
+         #Example: 25
+         #Default:250
+         max_connections: 250      
+         #java : JVM specific arguments. The runtime invokes the JVM in 64bit mode. As per NS Java,it is recommended to have the same value for Xmx and Xms(It is recommended to have a value greater than or equal to 1024m).                
+         java:  #arglist
+           #xmx: Instructs the JVM to use 1,024 MB as the maximum heap size for a single web server process.
+           #In Gateway service, all the endpoints are in a single JVM and you must alter the Xmx configuration based on the number of configured endpoints.
+           #If the number of configured endpoints are more, Hewlett Packard Enterprise recommends increasing the heap size
+           Xmx : 1024m
+           #xms :Instructs the JVM to start with minimum 1024 MB as the heap size for a single web server process.
+           Xms : 1024m
+         #elasticity: configures the elasticity features for the runtime
+         elasticity:
+            #enable: Flag to enable or disable elasticity feature. With elasticity feature,
+            #the number of webserver processes are expanded(increased) or contracted(decreased) dynamically based on the total number of TCP/IP connections.
+            #Example: false
+            #Default: false. If the value is 'true' the feature is enabled. If the value is 'false' elasticity feature is disabled.
+            enable: false
+            #collection_interval: This defines how frequently the number of TCP/IP connections established to webserver is polled. 
+            #Collected data will be considered for expand/contract.
+            # The unit is in seconds.
+            #Example: 10
+            #Default: 30
+            collection_interval: 30     
+            #expand_threshold: The threshold value in percentage terms of webserver's capacity to start new instance(s).
+            #max_connections value indicates the capacity, total number of TCP/IP connections a single webserver instance can handle.
+            #Every 1 minute average of data collected for the last 10 collection interval's is polled, to check if webserver's 
+            #capacity has reached the threshold to expand.
+            #Example: 70 - Indicates new server instance(s) should be started if the average number of TCP/IP connections to the webserver
+            #reached 70% of its capacity.
+            #Default: 70
+            expand_threshold: 70
+            #contract_threshold: The threshold value in percentage terms of webserver's capacity to stop instance(s).
+            #Every 10 minutes average of data collected for the last 50 collection interval's is polled, to check if webserver's 
+            #capacity has reached below the threshold to contract.
+            #Example: 30 - Indicates instance(s) should be stopped if the average number of TCP/IP connections to the webserver
+            #has reached below 30% of capacity.
+            #Default: 30
+            contract_threshold: 30
+      #place holder      
+      advanced:
+      
+      
+   #endpoint_global_configuration is the global configurations related to API gateway routes.
+   endpoint_global_configuration:
+       #The context_path indicates the context name of the web application.
+       #if the context_path is ROOT, then the appliation is deployed on ROOT context.
+       #A web application folder with the {context_path} name is created.
+       #Example: gway
+       #Default: ROOT
+     context_path: ROOT
+     #url_pattern: The main API Gateway Servlet will respond to the url-pattern specified here.
+     #In case of default context path(ROOT) the url will look like http://hostname:port}/{url_pattern}
+     #In case of non-default context path the url will look like http://hostname:port}/{context_path}/{url_pattern}
+     #Example: "/gway/*"
+     #Default: "/rest/*"
+     url_pattern: "/rest/*"
+     #include_custom_directories: The contents of these directories will be included in the web application directory.
+     #contents will be copied as is along with the directory structure. Provide comma separated values if more than one.
+     #Example: /home/user/resources
+     #Default: None  
+     include_custom_directories: None
+     #secure: To enable cross site request forgery (csrf) protection
+     secure:
+        #csrf: to enable or disable cross site request forgery protection(csrf). 
+        #supported values are enable or disable
+        #Example: enable
+        #default: disable  
+        csrf: disable
+     #DDL related configuration
+     ddl_defaults :
+        #java_package_name: The java package name to be used while generating sources for DDL definitions.
+        #Example: com.hpe.nonstop
+        java_package_name: com.hpe.nonstop.commons
+        #ddl_path: The path to the DDL dictionary in OSS format.
+        #Example: /G/data01/dict
+        #Default: /G/system/zapidict
+        ddl_path: /G/system/zapidict
+     #transaction related global configuration, each endpoints will inherit below transaction attributes. 
+     #transaction attributes also can be configured for each endpoint, which will override the global configuration.  
+     transaction:
+         #mode: transaction modes for the requests. supported transaction modes are REQUIRES_NEW and NEVER. 
+         #if mode is REQUIRES_NEW, new transaction is started for each request
+         #if mode is NEVER, transaction is not started
+         #Example: REQUIRES_NEW
+         #default: NEVER
+         mode: NEVER
+         #timeout: specifies timeout interval for new transaction. unit is in seconds.
+         #Example: 420
+         #default: 300         
+         timeout: 300
+         #two_phase_commit: to enable two phase commit. For the current API Gateway release, only the default value false is supported.
+         two_phase_commit: false     
+   #endpoint_definition is an array of camel context objects with unique {id} to facilitate multiple HTTP methods.
+   #An individual camel context cannot have same HTTP method repeated.
+   endpoint_definition:
+   #organisation_endpoint is a unique identifier to identify the camel context. 
+   #This should be an alpha-numeric string in the java package name syntax.
+     organisation_endpoint:
+       #path indicates the common source URL sub-path to which the rules have to be applied for all the HTTP methods in the context.
+       #Example: emp
+       #Default: This attribute defaults to the name of the endpoint,if not specified
+       path: "/del"
+       #description is the API Doc description for the context
+       description: "This Context contains route for the verbs delete"
+       #delete indicates the HTTP method for which the service has to be enabled.
+       #Example: delete | get |post | put
+       delete:
+         authorization:
+            #policy: Policy indicates the name of the authorization policy.Hence the valid users who are provided with authorization permissions will have access to the verb
+            #The name of policy specified must be defined in $GWAY_HOME/conf/GatewayTemplate.ftlx.j2 file. 
+            #By default, two policies are defined through admin and user. You can add additional policies in GatewayTemplate.ftlx.j2 file. 
+            #Credentials for these policies are defined in the $GWAY_HOME/conf/users.properties files. Any one of the defined policy can be specified for this key
+            #Example: user
+            #Default: no policy will be configured
+            policy: admin
+         #url indicates the source URL sub-path to which the rules have to be applied for the specific HTTP method.
+         #Example: "/"
+         url: "/deleting/"
+         #description is the API Doc description for the url
+         description: "This Route will delete employee data from the DB based on the ID present in the request"
+         #transaction configuration related to endpoint. this configuration will override the global transaction configuration.  
+         #transaction:
+            #mode: transaction modes for the requests. supported transaction modes are REQUIRES_NEW and NEVER. 
+            #if mode is REQUIRES_NEW, new transaction is started for each request
+            #if mode is NEVER,  transaction is not started
+            #mode: NEVER
+            #timeout: specifies timeout interval for new transaction. unit is in seconds.                     
+            #timeout: 300
+         #to indicates the static destination for the request to be routed. The {to} or {to_dynamic} can be used in exclusivity.
+         #Both cannot be present for the same HTTP method.
+         to:
+           #url is the destination URL of the NonStop process.E.g. nsji:{host:port}
+           #The process details can be mentioned in the service section.
+           #This host:port will be used to generate the JI Configuration along with the pathmon/process details mentioned in the service section.
+           #The port number must be unique ,if the endpoint needs to communicate with a specific NonStop process. In this sample all the endpoints communicate with the  same process, hence the port number(9999) in the url is same for all the endpoints
+           #If the url is not specified, a unique sequential port number would be generated.
+           #Example: nsji:localhost:8080
+           url: nsji:localhost:9999
+           #payload  contains the details of the type of information which is to be routed.
+           payload:
+             #type is the data type in NonStop service. This can be either DDL or FML. The value defaults to DDL. 
+             #Example: ddl
+             type: ddl
+             #ddl_definition contains the DDL definition names
+             ddl_definition:
+               #input is the request DDL definition name expected by the NonStop process
+               #As per the behaviour of DDL2Bean, if DDL definition name contains hyphen(-), hyphen(-) should be replaced by underscore(_)
+               #Example: request
+               input: request
+               #output is the response DDL definition from the NonStop process
+               #As per the behaviour of DDL2Bean, if DDL definition name contains hyphen(-), hyphen(-) should be replaced by underscore(_)
+               #Example: response
+               output: response
+               #error is the definition of the DDL emitted by the NonStop process after encountering errors. The error is interpreted based 
+               #on the error handler configured. The process sends the output based on the error condition specified.
+               #As per the behaviour of DDL2Bean, if DDL definition name contains hyphen(-), hyphen(-) should be replaced by underscore(_)
+               #Example: error
+               error: response
+           #error_handler represents the configuration of the error handler.
+           error_handler:
+              #handler represents the name of the error handler to be used. Supported values are DDL_BYTE_LOCATION_HANDLER and DDL_ERROR_FIELD_HANDLER. Any one of the these can be configured.
+              #DDL_BYTE_LOCATION_HANDLER - This handler can be used to check for error code based on the its location in the bytes sent as response by the back end service.
+              #DDL_ERROR_FIELD_HANDLER   - This handler can be used to check for error code based on its  presence in a specific DDL Field in the response sent by the back end service.
+              #CUSTOM_ERROR_HANDLER   - This handler can be used to add any custom error handler as per requirement to interpret the response as SUCCESS or ERROR.This handler will load the class specified by 'class_name' attribute specified below.
+              handler: DDL_ERROR_FIELD_HANDLER
+              #attributes represents the configuration of a specific handler
+              attributes:
+                #below are common attributes for error handler.These are mandatory if 'handler' is configured.
+                #value is the RHS value to be used to compare with the error code.
+                value: '1'
+                #comparator represents the comparator used to compare the error code sent by back end service with the value specified in 'value' attribute.The expression used for comparison would be 'error code(LHS) comparator value(RHS)'
+                #supported values are 'eq' , 'lt' and 'gt'. These represent 'equals' ,'less than' and'greater than' respectively.
+                comparator: eq
+                
+                
+                #Configuration specific for DDL_BYTE_LOCATION_HANDLER.
+                #These specific configuration are mandatory if DDL_BYTE_LOCATION_HANDLER is configured as handler.
+                #from_byte represents the offset to be used from the beginning of the response byte array received from the back end service.
+                #from_byte: 0
+                #length represents the number of the bytes starting at the given offset specified by 'from_byte'. These 'length' number of bytes would be read as error code and will be converted to the type specified by 'type' attribute.
+                #length: 4
+                #type represents the type of the error code. Supported values are 'NUMERIC' and 'STRING'.
+                #type: "NUMERIC"
+                
+                
+                #Configuration specific for DDL_ERROR_FIELD_HANDLER.
+                #These specific configuration are mandatory if DDL_ERROR_FIELD_HANDLER is configured as handler.
+                #error_field represents the DDL field name which would contain the error code. Append the ddl field name to the ddl definition name, with an intervening dot operator (.)
+                #If the DDL field say 'fld' is present inside another definition say 'def1' ,then the error_field needs to be specified with dot separation as 'def1.fld'.
+                #As per the behaviour of DDL2Bean, if DDL definition name contains hyphen(-), hyphen(-) should be replaced by underscore(_). If the field name contains hyphen(-) , after replacing it with underscore(_) use Camel Case as shown in example below.
+                #example: If the definition 'emp' defined under definition 'response' contains field with the name 'emp-id', it should be represented as 'response.emp.emp_Id'.
+                error_field: "response.emp.emp_Id"
+                
+                #Configuration specific for CUSTOM_ERROR_HANDLER.
+                #class_name represents the fully qualified name of the error handler class to be invoked.
+                #This class should extend the the AbstractErrorHandler class packaged with API Gateway. This can be located in the <GATEWAY_INSTALLATION>/lib/api-processors-1.0.jar file.
+                #example:  com.hpe.nonstop.api.processor.NewCustomErrorhandler
+                #If the CUSTOM_ERROR_HANDLER class needs any attributes for its configuration , they can be configured below as shown.These will be set on the CUSTOM_ERROR_HANDLER class using Setters and Getters.
+                #Example arrtributes:
+                #customprop1: 33
+                #customprop2: custompropvalue
+
+           #service contains the details of TS/MP serverClasses or process name of the service to which the request has to be routed. These attributes are used for generating the NSJI client socket configuration.
+           service:
+             #processName is the name of service process. Max Length allowed is 5.
+             #Example: gway
+             processName: GWAY
+             #pathmon is the name of the pathmon. Max Length allowed is 6.
+             #pathmon: pmon
+             #serverclass is the name of the serverclass. Max Length allowed is 15.
+             #serverclass: sclass
+             #open_qualifier is the open qualifier to be used for the JI socket. Max Length allowed is 7.
+             #open_qualifier: Q9999
+             #node_name is the node name to configured for the JI Socket. Max Length allowed is 7.
+             #node_name: name
+             #domain is the pathway domain name to be configured. Max Length allowed is 8.
+             #domain: dname
+             #mtu specifies the maximum buffer size in kilobytes that can be used for a message transfer.For more information,refer NSJI manual
+             #mtu: 2048
+           #json contains configurations related to json
+           json:
+             #validate indicates a boolean value{true | false} to be specified, whether the incoming/outgoing JSON has to be validated.
+             #Default : false
+             #Example: true
+             validate: false
+       #put indicates the HTTP method for which the service has to be enabled.
+       #Example: delete | get |post | put
+       put:
+         authorization:
+            #policy: Policy indicates the name of the authorization policy.Hence the valid users who are provided with authorization permissions will have access to the verb
+            #Example: user
+            #Default: no policy will be configured
+            policy: admin    
+         #url indicates the source URL sub-path to which the rules have to be applied for the specific HTTP method.
+         #Example: "/"
+         url: "/put/"
+         #transaction configuration related to endpoint. this configuration will override the global transaction configuration.  
+         #transaction:
+            #mode: transaction modes for the requests. supported transaction modes are REQUIRES_NEW and NEVER. 
+            #if mode is REQUIRES_NEW, new transaction is started for each request
+            #if mode is NEVER,  transaction is not started
+            #mode: NEVER
+            #timeout: specifies timeout interval for new transaction. unit is in seconds.                     
+            #timeout: 300
+         #to indicates the static destination for the request to be routed. The {to} or {to_dynamic} can be used in exclusivity.
+         #Both cannot be present for the same HTTP method.
+         to: 
+           #url indicates the destination URL of the NonStop process. E.g. nsji:{host:port}
+           #The process details can be mentioned in the service section.
+           #This host:port will be used to generate the JI Configuration along with the pathmon/process details mentioned in the service section.
+           #The port number must be unique ,if the endpoint needs to communicate with a specific NonStop process. In this sample all the endpoints communicate with the  same process, hence the port number(9999) in the url is same for all the endpoints
+           #If the url is not specified, a unique sequential port number would be generated.
+           #Example: nsji:localhost:8080
+           url: nsji:localhost:9999
+            #payload contains the details of the type of information which is to be routed.
+           payload:
+               #type is the data type in NonStop service. This can be either DDL or FML. The value defaults to DDL. 
+               #Example: ddl
+               type: ddl
+               #ddl_definition contains the DDL definition names
+               ddl_definition:
+                    #input is the request DDL definition name expected by the NonStop process
+                    #As per the behaviour of DDL2Bean, if DDL definition name contains hyphen(-), hyphen(-) should be replaced by underscore(_)
+                    #Example: request
+                    input: request
+                    #output is the response DDL definition from the NonStop process
+                    #As per the behaviour of DDL2Bean, if DDL definition name contains hyphen(-), hyphen(-) should be replaced by underscore(_)
+                    #Example: response
+                    output: response
+                    #error: The definition of the DDL emitted by the NonStop process after encountering errors. The error is interpreted based 
+                    #on the  error handler configured. The process sends the output based on the error condition specified.
+                    #As per the behaviour of DDL2Bean, if DDL definition name contains hyphen(-), hyphen(-) should be replaced by underscore(_)
+                    #Example: error
+                    error: response
+           #error_handler represents the configuration of the error handler.
+           #error_handler:
+              #handler represents the name of the error handler to be used. Supported values are DDL_BYTE_LOCATION_HANDLER and DDL_ERROR_FIELD_HANDLER. Any one of the these can be configured.
+              #DDL_BYTE_LOCATION_HANDLER - This handler can be used to check for error code based on the its location in the bytes sent as response by the back end service.
+              #DDL_ERROR_FIELD_HANDLER   - This handler can be used to check for error code based on its  presence in a specific DDL Field in the response sent by the back end service.
+              #CUSTOM_ERROR_HANDLER   - This handler can be used to add any custom error handler as per requirement to interpret the response as SUCCESS or ERROR.This handler will load the class specified by 'class_name' attribute specified below.
+              #handler: DDL_ERROR_FIELD_HANDLER
+              #attributes represents the configuration of a specific handler
+              #attributes:
+                 #below are common attributes for error handler.These are mandatory if 'handler' is configured.
+                 #value is the RHS value to be used to compare with the error code.
+                 #value: '1'
+                 #comparator represents the comparator used to compare the error code sent by back end service with the value specified in 'value' attribute.The expression used for comparison would be 'error code(LHS) comparator value(RHS)'
+                 #supported values are 'eq' , 'lt' and 'gt'. These represent 'equals' ,'less than' and'greater than' respectively.
+                 #comparator: eq
+                
+                
+                 #Configuration specific for DDL_BYTE_LOCATION_HANDLER.
+                 #These specific configuration are mandatory if DDL_BYTE_LOCATION_HANDLER is configured as handler.
+                 #from_byte represents the offset to be used from the beginning of the response byte array received from the back end service.
+                 #from_byte: 0
+                 #length represents the number of the bytes starting at the given offset specified by 'from_byte'. These 'length' number of bytes would be read as error code and will be converted to the type specified by 'type' attribute.
+                 #length: 4
+                 #type represents the type of the error code. Supported values are 'NUMERIC' and 'STRING'.
+                 #type: "NUMERIC"
+                
+                
+                 #Configuration specific for DDL_ERROR_FIELD_HANDLER.
+                 #These specific configuration are mandatory if DDL_ERROR_FIELD_HANDLER is configured as handler.
+                 #error_field represents the DDL field name which would contain the error code. Append the ddl field name to the ddl definition name, with an intervening dot operator (.)
+                 #If the DDL field say 'fld' is present inside another definition say 'def1' ,then the error_field needs to be specified with dot separation as 'def1.fld'.
+                 #As per the behaviour of DDL2Bean, if DDL definition name contains hyphen(-), hyphen(-) should be replaced by underscore(_). If the field name contains hyphen(-) , after replacing it with underscore(_) use Camel Case as shown in example below.
+                 #example: If the definition 'emp' defined under definition 'response' contains field with the name 'emp-id', it should be represented as 'response.emp.emp_Id'.
+                 #error_field: "response.emp.emp_Id"
+                 
+                 #Configuration specific for CUSTOM_ERROR_HANDLER.
+                 #class_name represents the fully qualified name of the error handler class to be invoked.
+                 #This class should extend the the AbstractErrorHandler class packaged with API Gateway. <GATEWAY_INSTALLATION>/lib/api-processors-1.0.jar file.
+                 #example:  com.hpe.nonstop.api.processor.NewCustomErrorhandler
+                 #If the CUSTOM_ERROR_HANDLER class needs any attributes for its configuration , they can be configured below as  shown.These will be set on the CUSTOM_ERROR_HANDLER class using Setters and Getters.
+                 #Example arrtributes:
+                 #customprop1: 33
+                 #customprop2: custompropvalue
+
+           #service contains the details of TS/MP serverClasses or process name of the service to which the request has to be routed. These attributes are used for generating the NSJI client socket configuration.
+           service:
+                #processName is the name of service process. Max Length allowed is 5.
+                #Example: gway
+                processName: GWAY
+                #pathmon is the name of the pathmon. Max Length allowed is 6.
+                #pathmon: pmon
+                #serverclass is the name of the serverclass. Max Length allowed is 15.
+                #serverclass: sclass
+                #open_qualifier is the open qualifier to be used for the JI socket. Max Length allowed is 7.
+                #open_qualifier: Q9999
+                #node_name is the node name to configured for the JI Socket. Max Length allowed is 15.
+                #node_name: name
+                #domain is the pathway domain name to be configured. Max Length allowed is 8.
+                #domain: dname   
+                #mtu specifies the maximum buffer size in kilobytes that can be used for a message transfer.For more information,refer NSJI manual
+                #mtu: 2048
+           #json contains configurations related to json
+           json:
+                #validate indicates a boolean value{true | false} to be specified, whether the incoming/outgoing JSON has to be validated.
+                #Default : false
+                #Example: true
+                validate: false
+   #employee_endpoint indicates a unique identifier to identify the camel context. 
+   #This should be an alpha-numeric string in the java package name syntax.
+     employee_endpoint:
+       #path is the common source URL sub-path to which the rules have to be applied for all the HTTP methods in the context.
+       #Example: emp
+       #Default: This attribute defaults to the name of the endpoint,if not specified
+       path: "/emp"
+       #get indicates the HTTP method for which the service has to be enabled.
+       #Example: delete | get |post | put
+       get:
+         authorization:
+            #policy: Policy indicates the name of the authorization policy.Hence the valid users who are provided with authorization permissions will have access to the verb
+            #Example: user
+            #Default: no policy will be configured
+            policy: user    
+         #url indicates the source URL sub-path to which the rules have to be applied for the specific HTTP method.
+         #Example: "/"
+         url: "/{version}/{user-id}"
+         #transaction configuration related to endpoint. this configuration will override the global transaction configuration.  
+         #transaction:
+            #mode: transaction modes for the requests. supported transaction modes are REQUIRES_NEW and NEVER. 
+            #if mode is REQUIRES_NEW, new transaction is started for each request
+            #if mode is NEVER,  transaction is not started
+            #mode: NEVER
+            #timeout: specifies timeout interval for new transaction. unit is in seconds.                     
+            #timeout: 300
+         #versioning indicates the source URL sub-path to which the rules have to be applied for the specific HTTP method. This contains routing information if the request has to routed to different destination based on the header present in the request.
+         #The destination is selected based on the value of the HTTP header {request_header}.
+         versioning:
+           #request_header indicates that the API gateway will fetch the value of this key from the HTTP method and the request will be routed to the destination associated with the value.
+           #Example: version_header
+           request_header: emp.version
+           #to_dynamic represents dynamic destinations map with key as value from the HTTP request attribute {request.header} and the corresponding destination 
+           to_dynamic:
+             #v1 is the version indicated by the value of the HTTP header {request_header}
+             v1:
+               #url indicates the destination URL of the NonStop process. E.g. nsji://{host:port}
+               #The process details can be mentioned in the service section.
+               #This host:port will be used to generate the JI Configuration along with the pathmon/process details mentioned in the service section.
+               #The port number must be unique ,if the endpoint needs to communicate with a specific NonStop process. In this sample all the endpoints communicate with the  same process, hence the port number(9999) in the url is same for all the endpoints
+               #If the url is not specified, a unique sequential port number would be generated.
+               #Example: nsji://localhost:8080
+               url: nsji:localhost:9999
+               #payload contains the details of the type of information which is to be routed.
+               payload:
+                 #type indicates the data type in NonStop service. This can be either DDL or FML. The value defaults to DDL. 
+                 #Example: ddl
+                 type: ddl
+                 #ddl_definition  contains the DDL definition names
+                 ddl_definition:
+                    #input is the request DDL definition name expected by the NonStop process
+                    #As per the behaviour of DDL2Bean, if DDL definition name contains hyphen(-), hyphen(-) should be replaced by underscore(_)
+                    #Example: request
+                    input: request
+                    #output is the response DDL definition from the NonStop process
+                    #As per the behaviour of DDL2Bean, if DDL definition name contains hyphen(-), hyphen(-) should be replaced by underscore(_)
+                    #Example: response
+                    output: response
+                    #error is the definition of the DDL emitted by the NonStop process after encountering errors. The error is interpreted based 
+                    #on the error handler configured. The process sends the output based on the error condition specified.
+                    #As per the behaviour of DDL2Bean, if DDL definition name contains hyphen(-), hyphen(-) should be replaced by underscore(_)
+                    #Example: error
+                    error: response
+               #error_handler represents the configuration of the error handler.
+               #error_handler:
+                   #handler represents the name of the error handler to be used. Supported values are DDL_BYTE_LOCATION_HANDLER and DDL_ERROR_FIELD_HANDLER. Any one of the these can be configured.
+                   #DDL_BYTE_LOCATION_HANDLER - This handler can be used to check for error code based on the its location in the bytes sent as response by the back end service.
+                   #DDL_ERROR_FIELD_HANDLER   - This handler can be used to check for error code based on its  presence in a specific DDL Field in the response sent by the back end service.
+                   #CUSTOM_ERROR_HANDLER   - This handler can be used to add any custom error handler as per requirement to interpret the response as SUCCESS or ERROR.This handler will load the class specified by 'class_name' attribute specified below.
+                   #handler: DDL_ERROR_FIELD_HANDLER
+                   #attributes represents the configuration of a specific handler
+                   #attributes:
+                      #below are common attributes for error handler.These are mandatory if 'handler' is configured.
+                      #value is the RHS value to be used to compare with the error code.
+                      #value: '1'
+                      #comparator represents the comparator used to compare the error code sent by back end service with the value specified in 'value' attribute.The expression used for comparison would be 'error code(LHS) comparator value(RHS)'
+                      #supported values are 'eq' , 'lt' and 'gt'. These represent 'equals' ,'less than' and'greater than' respectively.
+                      #comparator: eq
+                    
+                    
+                      #Configuration specific for DDL_BYTE_LOCATION_HANDLER.
+                      #These specific configuration are mandatory if DDL_BYTE_LOCATION_HANDLER is configured as handler.
+                      #from_byte represents the offset to be used from the beginning of the response byte array received from the back end service.
+                      #from_byte: 0
+                      #length represents the number of the bytes starting at the given offset specified by 'from_byte'. These 'length' number of bytes would be read as error code and will be converted to the type specified by 'type' attribute.
+                      #length: 4
+                      #type represents the type of the error code. Supported values are 'NUMERIC' and 'STRING'.
+                      #type: "NUMERIC"
+                    
+                    
+                      #Configuration specific for DDL_ERROR_FIELD_HANDLER.
+                      #These specific configuration are mandatory if DDL_ERROR_FIELD_HANDLER is configured as handler.
+                      #error_field represents the DDL field name which would contain the error code. Append the ddl field name to the ddl definition name, with an intervening dot operator (.)
+                      #If the DDL field say 'fld' is present inside another definition say 'def1' ,then the error_field needs to be specified with dot separation as 'def1.fld'.
+                      #As per the behaviour of DDL2Bean, if DDL definition name contains hyphen(-), hyphen(-) should be replaced by underscore(_). If the field name contains hyphen(-) , after replacing it with underscore(_) use Camel Case as shown in example below.
+                      #example: If the definition 'emp' defined under definition 'response' contains field with the name 'emp-id', it should be represented as 'response.emp.emp_Id'.
+                      #error_field: "response.emp.emp_Id"
+                      
+                      #Configuration specific for CUSTOM_ERROR_HANDLER.
+                      #class_name represents the fully qualified name of the error handler class to be invoked.
+                      #This class should extend the the AbstractErrorHandler class packaged with API Gateway. This can be located in the <GATEWAY_INSTALLATION>/lib/api-processors-1.0.jar file.
+                      #example:  com.hpe.nonstop.api.processor.NewCustomErrorhandler
+                      #If the CUSTOM_ERROR_HANDLER class needs any attributes for its configuration , they can be configured below as shown.These will be set on the CUSTOM_ERROR_HANDLER class using Setters and Getters.
+                      #Example arrtributes:
+                      #customprop1: 33
+                      #customprop2: custompropvalue
+
+               #service contains the details of TS/MP serverClasses or process name of the service to which the request has to be routed. These attributes are used for generating the NSJI client socket configuration.
+               service:
+                    #processName is the name of service process. Max Length allowed is 5.
+                    #Example: gway
+                    processName: GWAY
+                    #pathmon is the name of the pathmon. Max Length allowed is 6.
+                    #pathmon: pmon
+                    #serverclass is the name of the serverclass. Max Length allowed is 15.
+                    #serverclass: sclass
+                    #open_qualifier is the open qualifier to be used for the JI socket. Max Length allowed is 7.
+                    #open_qualifier: Q9999
+                    #node_name is the node name to configured for the JI Socket. Max Length allowed is 15.
+                    #node_name: name
+                    #domain is the pathway domain name to be configured. Max Length allowed is 8.
+                    #domain: dname    
+                    #mtu specifies the maximum buffer size in kilobytes that can be used for a message transfer.For more information,refer NSJI manual
+                    #mtu: 2048
+               #json contains configurations related to json
+               json:
+                   #validate contains a Boolean value{true | false} to be specified, whether the incoming/outgoing JSON has to be validated.
+                   #Default: false
+                   #Example: true
+                  validate: false
+                  #input_transformer is the URL sub-path for the transformer specification file for the in-bound (request to the NonStop process) JSON.
+                  #Example: "/spec.json"
+                  input_transformer: "/spec.json"
+            #default represents the case when the HTTP header {request_header} is not part of the incoming HTTP Request.
+             default:
+                  #url indicates the destination URL of the NonStop process. E.g. nsji://{host:port}
+                  #The process details can be mentioned in the service section.
+                  #This host:port will be used to generate the JI Configuration along with the pathmon/process details mentioned in the service section.
+                  #The port number must be unique ,if the endpoint needs to communicate with a specific NonStop process. In this sample all the endpoints communicate with the  same process, hence the port number(9999) in the url is same for all the endpoints
+                  #If the url is not specified, a unique sequential port number would be generated.
+                  #Example: nsji://localhost:8080
+                  url: nsji:localhost:9999
+                  #payload is the data type in NonStop service. This can be either DDL or FML. The value defaults to DDL. 
+                  payload:
+                    #type is the data type in NonStop service. This can be either DDL or FML. The value defaults to DDL. 
+                    #Example: ddl
+                    type: ddl
+                    #ddl_definition contains the DDL definition names
+                    ddl_definition:
+                       #input is the request DDL definition name expected by the NonStop process
+                       #As per the behaviour of DDL2Bean, if DDL definition name contains hyphen(-), hyphen(-) should be replaced by underscore(_)
+                       #Example: request
+                       input: request
+                       #output is the response DDL definition from the NonStop process
+                       #As per the behaviour of DDL2Bean, if DDL definition name contains hyphen(-), hyphen(-) should be replaced by underscore(_)
+                       #Example: response
+                       output: response
+                       #erroris the definition of the DDL emitted by the NonStop process after encountering errors. The error is interpreted based 
+                       #on the error handler configured. The process sends the output based on the error condition specified.
+                       #As per the behaviour of DDL2Bean, if DDL definition name contains hyphen(-), hyphen(-) should be replaced by underscore(_)
+                       #Example: error
+                       error: response
+                  #error_handler represents the configuration of the error handler.
+                  #error_handler:
+                      #handler represents the name of the error handler to be used. Supported values are DDL_BYTE_LOCATION_HANDLER and DDL_ERROR_FIELD_HANDLER. Any one of the these can be configured.
+                      #DDL_BYTE_LOCATION_HANDLER - This handler can be used to check for error code based on the its location in the bytes sent as response by the back end service.
+                      #DDL_ERROR_FIELD_HANDLER   - This handler can be used to check for error code based on its  presence in a specific DDL Field in the response sent by the back end service.
+                      #CUSTOM_ERROR_HANDLER   - This handler can be used to add any custom error handler as per requirement to interpret the response as SUCCESS or ERROR.This handler will load the class specified by 'class_name' attribute specified below.
+                      #handler: DDL_ERROR_FIELD_HANDLER
+                      #attributes represents the configuration of a specific handler
+                      #attributes:
+                         #below are common attributes for error handler.These are mandatory if 'handler' is configured.
+                         #value is the RHS value to be used to compare with the error code.
+                         #value: '1'
+                         #comparator represents the comparator used to compare the error code sent by back end service with the value specified in 'value' attribute.The expression used for comparison would be 'error code(LHS) comparator value(RHS)'
+                         #supported values are 'eq' , 'lt' and 'gt'. These represent 'equals' ,'less than' and'greater than' respectively.
+                         #comparator: eq
+                    
+                    
+                         #Configuration specific for DDL_BYTE_LOCATION_HANDLER.
+                         #These specific configuration are mandatory if DDL_BYTE_LOCATION_HANDLER is configured as handler.
+                         #from_byte represents the offset to be used from the beginning of the response byte array received from the back end service.
+                         #from_byte: 0
+                         #length represents the number of the bytes starting at the given offset specified by 'from_byte'. These 'length' number of bytes would be read as error code and will be converted to the type specified by 'type' attribute.
+                         #length: 4
+                         #type represents the type of the error code. Supported values are 'NUMERIC' and 'STRING'.
+                         #type: "NUMERIC"
+                    
+                    
+                         #Configuration specific for DDL_ERROR_FIELD_HANDLER.
+                         #These specific configuration are mandatory if DDL_ERROR_FIELD_HANDLER is configured as handler.
+                         #error_field represents the DDL field name which would contain the error code. Append the ddl field name to the ddl definition name, with an intervening dot operator (.)
+                         #If the DDL field say 'fld' is present inside another definition say 'def1' ,then the error_field needs to be specified with dot separation as 'def1.fld'.
+                         #As per the behaviour of DDL2Bean, if DDL definition name contains hyphen(-), hyphen(-) should be replaced by underscore(_). If the field name contains hyphen(-) , after replacing it with underscore(_) use Camel Case as shown in example below.
+                         #example: If the definition 'emp' defined under definition 'response' contains field with the name 'emp-id', it should be represented as 'response.emp.emp_Id'.
+                         #error_field: "response.emp.emp_Id"
+                         
+                         #Configuration specific for CUSTOM_ERROR_HANDLER.
+                         #class_name represents the fully qualified name of the error handler class to be invoked.
+                         #This class should extend the the AbstractErrorHandler class packaged with API Gateway. This can be located in the <GATEWAY_INSTALLATION>/lib/api-processors-1.0.jar file.
+                         #example:  com.hpe.nonstop.api.processor.NewCustomErrorhandler
+                         #If the CUSTOM_ERROR_HANDLER class needs any attributes for its configuration , they can be configured below as shown.These will be set on the CUSTOM_ERROR_HANDLER class using Setters and Getters.
+                         #Example arrtributes:
+                         #customprop1: 33
+                         #customprop2: custompropvalue
+
+                  #service contains the details of TS/MP serverClasses or process name of the service to which the request has to be routed. These attributes are used for generating the NSJI client socket configuration.
+                  service:
+                     #processName is the name of service process. Max Length allowed is 5.
+                     #Example: gway
+                     processName: GWAY
+                     #pathmon is the name of the pathmon. Max Length allowed is 6.
+                     #pathmon: pmon
+                     #serverclass is the name of the serverclass. Max Length allowed is 15.
+                     #serverclass: sclass
+                     #open_qualifier is the open qualifier to be used for the JI socket. Max Length allowed is 7.
+                     #open_qualifier: Q9999
+                     #node_name is the node name to configured for the JI Socket. Max Length allowed is 15.
+                     #node_name: name
+                     #domain is the pathway domain name to be configured. Max Length allowed is 8.
+                     #domain: dname  
+                     #mtu specifies the maximum buffer size in kilobytes that can be used for a message transfer.For more information,refer NSJI manual
+                     #mtu: 2048
+                  #json contains configurations related to json
+                  json:
+                     #validate indicates a boolean value{true | false} to be specified, whether the incoming/outgoing JSON has to be validated.
+                     #Default : false
+                     #Example: true
+                     validate: false
+                     #input_transformer is the URL sub-path for the transformer specification file for the in-bound (request to the NonStop process) JSON.
+                     #Example: "spec.json"
+                     input_transformer: "/spec.json"
+       #post indicates the HTTP method for which the service has to be enabled.
+       #Example: delete | get |post | put
+       post:
+         authorization:
+            #policy: Policy indicates the name of the authorization policy.Hence the valid users who are provided with authorization permissions will have access to the verb
+            #Example: user
+            #Default: no policy will be configured
+            #policy: admin    
+         #url indicates the source URL sub-path to which the rules have to be applied for the specific HTTP method.
+         #Example: "/"
+         url: "/posting/"
+         #transaction configuration related to endpoint. this configuration will override the global transaction configuration.  
+         #transaction:
+            #mode: transaction modes for the requests. supported transaction modes are REQUIRES_NEW and NEVER. 
+            #if mode is REQUIRES_NEW, new transaction is started for each request
+            #if mode is NEVER,  transaction is not started
+            #mode: NEVER
+            #timeout: specifies timeout interval for new transaction. unit is in seconds.                     
+            #timeout: 300
+         #to is the static destination for the request to be routed. The {to} or {to_dynamic} can be used in exclusivity.
+         #Both cannot be present for the same HTTP method.
+         to: 
+           #url indicates the destination URL of the NonStop process. E.g. nsji:{host:port}
+           #The process details can be mentioned in the service section.
+           #This host:port will be used to generate the JI Configuration along with the pathmon/process details mentioned in the service section.
+           #The port number must be unique ,if the endpoint needs to communicate with a specific NonStop process. In this sample all the endpoints communicate with the  same process, hence the port number(9999) in the url is same for all the endpoints
+           #If the url is not specified, a unique sequential port number would be generated.
+           #Example: nsji:localhost:8080
+           url: nsji:localhost:9999
+            #payload contains the details of the type of information which is to be routed.
+           payload:
+               #type is the data type in NonStop service. This can be either DDL or FML. The value defaults to DDL. 
+               #Example: ddl
+               type: ddl
+               #ddl_definition contains the DDL definition names
+               ddl_definition:
+                    #input is the request DDL definition name expected by the NonStop process
+                    #As per the behaviour of DDL2Bean, if DDL definition name contains hyphen(-), hyphen(-) should be replaced by underscore(_)
+                    #Example: request
+                    input: request
+                    #output is the response DDL definition from the NonStop process
+                    #As per the behaviour of DDL2Bean, if DDL definition name contains hyphen(-), hyphen(-) should be replaced by underscore(_)
+                    #Example: response
+                    output: response
+                    #error is the definition of the DDL emitted by the NonStop process after encountering errors. The error is interpreted based 
+                    #on the error handler configured. The process sends the output based on the error condition specified.
+                    #As per the behaviour of DDL2Bean, if DDL definition name contains hyphen(-), hyphen(-) should be replaced by underscore(_)
+                    #Example: error
+                    error: response
+           #error_handler represents the configuration of the error handler.
+           #error_handler:
+               #handler represents the name of the error handler to be used. Supported values are DDL_BYTE_LOCATION_HANDLER and DDL_ERROR_FIELD_HANDLER. Any one of the these can be configured.
+               #DDL_BYTE_LOCATION_HANDLER - This handler can be used to check for error code based on the its location in the bytes sent as response by the back end service.
+               #DDL_ERROR_FIELD_HANDLER   - This handler can be used to check for error code based on its  presence in a specific DDL Field in the response sent by the back end service.
+               #CUSTOM_ERROR_HANDLER   - This handler can be used to add any custom error handler as per requirement to interpret the response as SUCCESS or ERROR.This handler will load the class specified by 'class_name' attribute specified below.
+               #handler: DDL_ERROR_FIELD_HANDLER
+               #attributes represents the configuration of a specific handler
+               #attributes:
+                  #below are common attributes for error handler.These are mandatory if 'handler' is configured.
+                  #value is the RHS value to be used to compare with the error code.
+                  #value: '1'
+                  #comparator represents the comparator used to compare the error code sent by back end service with the value specified in 'value' attribute.The expression used for comparison would be 'error code(LHS) comparator value(RHS)'
+                  #supported values are 'eq' , 'lt' and 'gt'. These represent 'equals' ,'less than' and'greater than' respectively.
+                  #comparator: eq
+                
+                
+                  #Configuration specific for DDL_BYTE_LOCATION_HANDLER.
+                  #These specific configuration are mandatory if DDL_BYTE_LOCATION_HANDLER is configured as handler.
+                  #from_byte represents the offset to be used from the beginning of the response byte array received from the back end service.
+                  #from_byte: 0
+                  #length represents the number of the bytes starting at the given offset specified by 'from_byte'. These 'length' number of bytes would be read as error code and will be converted to the type specified by 'type' attribute.
+                  #length: 4
+                  #type represents the type of the error code. Supported values are 'NUMERIC' and 'STRING'.
+                  #type: "NUMERIC"
+                
+                
+                  #Configuration specific for DDL_ERROR_FIELD_HANDLER.
+                  #These specific configuration are mandatory if DDL_ERROR_FIELD_HANDLER is configured as handler.
+                  #error_field represents the DDL field name which would contain the error code. Append the ddl field name to the ddl definition name, with an intervening dot operator (.)
+                  #If the DDL field say 'fld' is present inside another definition say 'def1' ,then the error_field needs to be specified with dot separation as 'def1.fld'.
+                  #As per the behaviour of DDL2Bean, if DDL definition name contains hyphen(-), hyphen(-) should be replaced by underscore(_). If the field name contains hyphen(-) , after replacing it with underscore(_) use Camel Case as shown in example below.
+                  #example: If the definition 'emp' defined under definition 'response' contains field with the name 'emp-id', it should be represented as 'response.emp.emp_Id'.
+                  #error_field: "response.emp.emp_Id"
+                  
+                  #Configuration specific for CUSTOM_ERROR_HANDLER.
+                  #class_name represents the fully qualified name of the error handler class to be invoked.
+                  #This class should extend the the AbstractErrorHandler class packaged with API Gateway. This can be located in the <GATEWAY_INSTALLATION>/lib/api-processors-1.0.jar file.
+                  #example:  com.hpe.nonstop.api.processor.NewCustomErrorhandler
+                  #If the CUSTOM_ERROR_HANDLER class needs any attributes for its configuration , they can be configured below as shown.These will be set on the CUSTOM_ERROR_HANDLER class using Setters and Getters.
+                  #Example arrtributes:
+                  #customprop1: 33
+                  #customprop2: custompropvalue
+
+           #service contains the details of TS/MP serverClasses or process name of the service to which the request has to be routed. These attributes are used for generating the NSJI client socket configuration.
+           service:
+                #processName is the name of service process. Max Length allowed is 5.
+                #Example: gway
+                processName: GWAY
+                #pathmon is the name of the pathmon. Max Length allowed is 6.
+                #pathmon: pmon
+                #serverclass is the name of the serverclass. Max Length allowed is 15.
+                #serverclass: sclass
+                #open_qualifier is the open qualifier to be used for the JI socket. Max Length allowed is 7.
+                #open_qualifier: Q9999
+                #node_name is the node name to configured for the JI Socket. Max Length allowed is 15.
+                #node_name: name
+                #domain is the pathway domain name to be configured. Max Length allowed is 8.
+                #domain: dname
+                #mtu specifies the maximum buffer size in kilobytes that can be used for a message transfer.For more information,refer NSJI manual
+                #mtu: 2048
+           #json contains configurations related to json
+           json:
+                #validate indicates a boolean value{true | false} to be specified, whether the incoming/outgoing JSON has to be validated.
+                #Default : false
+                #Example: true
+                validate: false
+   
